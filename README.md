@@ -198,7 +198,8 @@ its SHA-256 `modules.toml`, license, and [`MODULE.md`](MODULE.md).
 `checksum.toml` records the archive hashes. Verification loads each native module
 through TinyBus and calls `Providers` before publishing the immutable release.
 
-TinyBus itself is not shipped here; the pinned submodule is the build-time SDK.
+TinyBus itself is not shipped here; the pinned v0.3.3 source submodule is the
+build-time SDK, and module dependencies require that compatible SDK release.
 
 ## Documentation
 
