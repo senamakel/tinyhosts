@@ -41,6 +41,30 @@ def release_files():
 
 
 class ReviewedReleaseContractTests(unittest.TestCase):
+    def test_reviewed_epic_release_delegates_to_the_canonical_preflight(self):
+        workflow = (ROOT / ".github" / "workflows" / "release-reviewed-epic.yml").read_text()
+        inputs = workflow.split("    inputs:\n", 1)[1].split("\npermissions:", 1)[0]
+        self.assertEqual(
+            __import__("re").findall(r"^      ([a-z-]+):$", inputs, __import__("re").MULTILINE),
+            ["tag", "version", "reviewed-pr"],
+        )
+        self.assertIn("      reviewed-pr:\n        description:", inputs)
+        self.assertIn("        type: number", inputs)
+        self.assertIn(
+            "permissions:\n  contents: write\n  pull-requests: read\n  checks: read\n  actions: read\n",
+            workflow,
+        )
+        self.assertIn(
+            "uses: tinyhumansai/.github/.github/workflows/module-reviewed-epic-release.yml"
+            "@e045fc567c583a1b83dc9c1edef896179853fa69",
+            workflow,
+        )
+        self.assertIn("reviewed-pr: ${{ inputs['reviewed-pr'] }}", workflow)
+        self.assertNotIn("module-crate:", workflow)
+        self.assertNotIn("actions/checkout", workflow)
+        self.assertNotIn("validate_reviewed_release.py", workflow)
+        self.assertNotIn("  push:", workflow)
+
     def test_release_manifest_and_module_sdk_are_pinned_together(self):
         manifest = tomllib.loads((ROOT / "Cargo.toml").read_text())
         bus_manifest = tomllib.loads((ROOT / "crates" / "tinyhosts-bus" / "Cargo.toml").read_text())
