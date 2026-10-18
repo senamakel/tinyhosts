@@ -127,7 +127,7 @@ class ReviewedReleaseContractTests(unittest.TestCase):
             self.assertIn(f"      {input_name}:", workflow)
         self.assertEqual(
             hashlib.sha256(legacy).hexdigest(),
-            "fc76c1d8dd5487bda978502932107d8cfa1ed671",
+            "9f50de454c7fa81350a62358fe18a25ef9afe3f34a593dc34ff30dd1c2c5a8b6",
         )
 
 
