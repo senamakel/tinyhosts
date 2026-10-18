@@ -3,13 +3,18 @@
 import json
 import os
 import re
+import subprocess
 import sys
+import tomllib
+from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 
 VERSION = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?\Z")
 POSITIVE_INTEGER = re.compile(r"[1-9][0-9]*\Z")
+RELEASE_FILES = {"Cargo.toml", "crates/tinyhosts-bus/Cargo.toml", "vendor/tinybus"}
+TINYBUS_SDK_COMMIT = "cba2de0e573f99fe4c7e45ba14e2d6b5a2a7757f"
 
 
 def release_route(tag, version, reviewed_pr, ref):
@@ -28,7 +33,7 @@ def release_route(tag, version, reviewed_pr, ref):
     }
 
 
-def validate_reviewed_pr(pull, reviews, repository, number):
+def validate_reviewed_pr(pull, reviews, files, repository, number):
     """Require a merged main PR with a current approval from someone else."""
     if pull.get("number") != number:
         raise ValueError("reviewed-pr did not resolve to the requested pull request")
@@ -38,6 +43,9 @@ def validate_reviewed_pr(pull, reviews, repository, number):
     base_repo = base.get("repo") or {}
     if base.get("ref") != "main" or base_repo.get("full_name", "").lower() != repository.lower():
         raise ValueError("reviewed-pr must target this repository's main branch")
+    changed_files = {entry.get("filename") for entry in files if isinstance(entry, dict)}
+    if not RELEASE_FILES.issubset(changed_files):
+        raise ValueError("reviewed-pr must prepare the package, bus crate, and TinyBus SDK pin")
 
     author = (pull.get("user") or {}).get("login", "").lower()
     head_sha = (pull.get("head") or {}).get("sha")
@@ -54,6 +62,32 @@ def validate_reviewed_pr(pull, reviews, repository, number):
         for reviewer, review in latest_reviews.items()
     ):
         raise ValueError("reviewed-pr has no current approval from another user")
+
+
+def validate_release_manifests(version, root):
+    """Require the checked-out release commit to match the requested SDK bump."""
+    manifest = tomllib.loads((root / "Cargo.toml").read_text(encoding="utf-8"))
+    bus_manifest = tomllib.loads(
+        (root / "crates" / "tinyhosts-bus" / "Cargo.toml").read_text(encoding="utf-8")
+    )
+    if manifest.get("package", {}).get("version") != version:
+        raise ValueError("version does not match the TinyHosts package manifest")
+    if bus_manifest.get("package", {}).get("version") != version:
+        raise ValueError("version does not match the TinyHosts bus manifest")
+    if manifest.get("dependencies", {}).get("tinyhosts-bus", {}).get("version") != version:
+        raise ValueError("TinyHosts bus dependency does not match the release version")
+    if manifest.get("dependencies", {}).get("tinybus", {}).get("version") != ">=0.3.2, <0.4":
+        raise ValueError("TinyBus dependency must target SDK 0.3.2")
+    if manifest.get("dependencies", {}).get("tinybus-module", {}).get("version") != ">=0.3.2, <0.4":
+        raise ValueError("TinyBus module dependency must target SDK 0.3.2")
+    try:
+        gitlink = subprocess.check_output(
+            ["git", "rev-parse", "HEAD:vendor/tinybus"], cwd=root, text=True
+        ).strip()
+    except subprocess.CalledProcessError as error:
+        raise ValueError("could not verify the TinyBus SDK pin") from error
+    if gitlink != TINYBUS_SDK_COMMIT:
+        raise ValueError("TinyBus SDK pin does not match published version 0.3.2")
 
 
 def github_json(repository, path, token):
@@ -81,14 +115,16 @@ def main():
             os.environ["REVIEWED_PR"],
             os.environ["GITHUB_REF"],
         )
+        validate_release_manifests(route["version"], Path(__file__).resolve().parents[2])
         repository = os.environ["GITHUB_REPOSITORY"]
         token = os.environ["GITHUB_TOKEN"]
         number = route["reviewed-pr"]
         pull = github_json(repository, f"pulls/{number}", token)
         reviews = github_json(repository, f"pulls/{number}/reviews?per_page=100", token)
-        if not isinstance(reviews, list):
+        files = github_json(repository, f"pulls/{number}/files?per_page=100", token)
+        if not isinstance(reviews, list) or not isinstance(files, list):
             raise ValueError("GitHub returned an invalid reviewed-pr response")
-        validate_reviewed_pr(pull, reviews, repository, number)
+        validate_reviewed_pr(pull, reviews, files, repository, number)
         with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
             for name in ("tag", "version"):
                 output.write(f"{name}={route[name]}\n")

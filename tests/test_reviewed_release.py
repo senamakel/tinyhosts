@@ -32,6 +32,14 @@ def pull_request(**overrides):
     return value
 
 
+def release_files():
+    return [
+        {"filename": "Cargo.toml"},
+        {"filename": "crates/tinyhosts-bus/Cargo.toml"},
+        {"filename": "vendor/tinybus"},
+    ]
+
+
 class ReviewedReleaseContractTests(unittest.TestCase):
     def test_release_manifest_and_module_sdk_are_pinned_together(self):
         manifest = tomllib.loads((ROOT / "Cargo.toml").read_text())
@@ -47,6 +55,9 @@ class ReviewedReleaseContractTests(unittest.TestCase):
             ).strip(),
             "cba2de0e573f99fe4c7e45ba14e2d6b5a2a7757f",
         )
+        release.validate_release_manifests("0.4.2", ROOT)
+        with self.assertRaises(ValueError):
+            release.validate_release_manifests("0.4.3", ROOT)
 
     def test_routes_a_valid_reviewed_release(self):
         route = release.release_route(
@@ -86,7 +97,11 @@ class ReviewedReleaseContractTests(unittest.TestCase):
             }
         ]
         release.validate_reviewed_pr(
-            pull_request(), reviews, repository="tinyhumansai/tinyhosts", number=42
+            pull_request(),
+            reviews,
+            release_files(),
+            repository="tinyhumansai/tinyhosts",
+            number=42,
         )
 
     def test_rejects_unmerged_misdirected_unreviewed_or_stale_prs(self):
@@ -98,24 +113,39 @@ class ReviewedReleaseContractTests(unittest.TestCase):
             }
         ]
         cases = [
-            (pull_request(state="open", merged=False, merged_at=None), approved),
-            (pull_request(merged=False, merged_at=None), approved),
-            (pull_request(base={"ref": "release", "repo": {"full_name": "tinyhumansai/tinyhosts"}}), approved),
-            (pull_request(base={"ref": "main", "repo": {"full_name": "attacker/tinyhosts"}}), approved),
-            (pull_request(), []),
+            (pull_request(state="open", merged=False, merged_at=None), approved, release_files()),
+            (pull_request(merged=False, merged_at=None), approved, release_files()),
+            (
+                pull_request(base={"ref": "release", "repo": {"full_name": "tinyhumansai/tinyhosts"}}),
+                approved,
+                release_files(),
+            ),
+            (
+                pull_request(base={"ref": "main", "repo": {"full_name": "attacker/tinyhosts"}}),
+                approved,
+                release_files(),
+            ),
+            (pull_request(), [], release_files()),
+            (pull_request(), approved, [{"filename": "README.md"}]),
             (
                 pull_request(),
                 [{"user": {"login": "author"}, "state": "APPROVED", "commit_id": "abc123"}],
+                release_files(),
             ),
             (
                 pull_request(),
                 [{"user": {"login": "reviewer"}, "state": "APPROVED", "commit_id": "old"}],
+                release_files(),
             ),
         ]
-        for pull, reviews in cases:
-            with self.subTest(pull=pull, reviews=reviews), self.assertRaises(ValueError):
+        for pull, reviews, files in cases:
+            with self.subTest(pull=pull, reviews=reviews, files=files), self.assertRaises(ValueError):
                 release.validate_reviewed_pr(
-                    pull, reviews, repository="tinyhumansai/tinyhosts", number=42
+                    pull,
+                    reviews,
+                    files,
+                    repository="tinyhumansai/tinyhosts",
+                    number=42,
                 )
 
     def test_new_route_is_closed_pinned_and_leaves_the_ordinary_route_unchanged(self):
