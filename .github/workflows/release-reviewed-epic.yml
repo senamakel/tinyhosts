@@ -24,7 +24,7 @@ permissions:
 
 jobs:
   release:
-    uses: tinyhumansai/.github/.github/workflows/module-reviewed-epic-release.yml@e045fc567c583a1b83dc9c1edef896179853fa69
+    uses: tinyhumansai/.github/.github/workflows/module-reviewed-epic-release.yml@6ed83b04aab2d8977ec62e966cb914531e534fa4
     with:
       tag: ${{ inputs.tag }}
       version: ${{ inputs.version }}
