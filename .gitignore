@@ -2,7 +2,6 @@
 /target/
 **/*.rs.bk
 *.pdb
-__pycache__/
 
 # Coverage output
 /coverage/
