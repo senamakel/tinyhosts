@@ -1,6 +1,6 @@
 [package]
 name = "tinyhosts"
-version = "0.4.1"
+version = "0.4.2"
 edition = "2024"
 rust-version = "1.88"
 license = "GPL-3.0-only"
@@ -33,13 +33,13 @@ exclude = ["vendor/tinybus"]
 
 [dependencies]
 # Pure vocabulary shared with dynamically loaded module consumers.
-tinyhosts-bus = { path = "crates/tinyhosts-bus", version = "0.4.1" }
+tinyhosts-bus = { path = "crates/tinyhosts-bus", version = "0.4.2" }
 # TinyBus defines the message types, interface macro, and frozen module ABI used
 # by the generated integration. Socket and CLI features are unnecessary here.
-tinybus = { version = ">=0.1.3, <0.2", default-features = false, features = ["macros", "modules"], optional = true }
+tinybus = { version = ">=0.3.2, <0.4", default-features = false, features = ["macros", "modules"], optional = true }
 # The module-side SDK owns the isolated runtime and exports the ABI entrypoints
 # required by TinyBus's dynamic loader.
-tinybus-module = { version = ">=0.1.3, <0.2", optional = true }
+tinybus-module = { version = ">=0.3.2, <0.4", optional = true }
 # Derive macros for the crate-wide error type in `src/error/mod.rs`.
 thiserror = "2"
 # `Host` is consumed as `dyn Host`, and every method performs network I/O, so

@@ -171,9 +171,19 @@ the suite is offline, deterministic, and needs no token.
 ## Releasing
 
 Update the workspace versions, local dependency constraints, and lockfile in a
-reviewed pull request. After it merges to `main`, create the matching `v<version>`
-tag on that commit. The **Release** workflow runs on the tag; its manual input
-accepts an existing tag when retrying a release.
+reviewed pull request. For an ordinary release on `main`, create the matching
+`v<version>` tag on the merged commit. The **Release** workflow runs on the tag;
+its manual input accepts an existing tag when retrying a release.
+
+For a release from the canonical epic branch
+`tinyhumansai/tinyhosts:epic/8056-modules-wiring`, use **Reviewed epic release**.
+Create and push a signed `v<version>` tag that points to the exact merge commit
+of the canonical pull request, then dispatch the workflow with `tag` (for
+example, `v0.4.2`), `version` without the leading `v` (for example, `0.4.2`),
+and `reviewed-pr` set to that positive canonical pull request number. The tag
+must already exist when dispatched. Preflight checks the tag target and that
+the pull request is merged to the canonical epic branch with its required
+reviews and checks; it does not verify the tag's cryptographic signature.
 
 The shared release workflow builds and verifies 17 native and distro archives across
 Linux, macOS, and Windows. Assets follow
