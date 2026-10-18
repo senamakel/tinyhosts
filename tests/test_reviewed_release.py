@@ -42,7 +42,9 @@ class ReviewedReleaseContractTests(unittest.TestCase):
         self.assertEqual(manifest["dependencies"]["tinybus"]["version"], ">=0.3.2, <0.4")
         self.assertEqual(manifest["dependencies"]["tinybus-module"]["version"], ">=0.3.2, <0.4")
         self.assertEqual(
-            subprocess.check_output(["git", "-C", str(ROOT / "vendor" / "tinybus"), "rev-parse", "HEAD"], text=True).strip(),
+            subprocess.check_output(
+                ["git", "-C", str(ROOT), "rev-parse", "HEAD:vendor/tinybus"], text=True
+            ).strip(),
             "cba2de0e573f99fe4c7e45ba14e2d6b5a2a7757f",
         )
 
