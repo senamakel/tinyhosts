@@ -149,19 +149,17 @@ git submodule update --init --recursive
 ```
 
 ```sh
+python3 -B -m unittest tests.test_reviewed_release -v
 cargo fmt --all -- --check
 cargo clippy --all-targets --all-features -- -D warnings
 cargo build --all-targets --all-features
 cargo test --all-features
 ```
 
-Those four are the Rust build and test contract used by CI. CI also checks the
-reviewed release route and compatibility pins; run this from the repository
-root after changing release workflows:
-
-```sh
-python3 -B -m unittest tests.test_reviewed_release -v
-```
+The Python contract test checks the reviewed workflow pin, package and
+dependency versions, and vendored TinyBus compatibility. CI runs it on every
+pull request and every push to `main`. The four Cargo commands are the Rust
+build and test contract.
 
 Optional extras:
 

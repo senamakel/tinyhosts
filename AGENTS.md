@@ -89,21 +89,22 @@ written to expect. `Vercel::with_base_url` exists for exactly this.
 
 ## Build And Test
 
-Run every command from the repository root. These four are the Rust build and
-test contract used by CI:
+Run every command from the repository root. CI's reviewed-release contract
+checks the caller pin and package, dependency, and vendored TinyBus versions
+on every pull request and every push to `main`. Run it as part of normal
+validation:
+
+```sh
+python3 -B -m unittest tests.test_reviewed_release -v
+```
+
+These four commands are the Rust build and test contract used by CI:
 
 ```sh
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo build --workspace --all-targets --all-features
 cargo test --workspace --all-features
-```
-
-CI also runs the reviewed release routing and compatibility contract. Run it
-locally after changing release workflows or their pinned shared workflow:
-
-```sh
-python3 -B -m unittest tests.test_reviewed_release -v
 ```
 
 Supporting commands:
