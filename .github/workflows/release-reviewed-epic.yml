@@ -1,0 +1,53 @@
+name: Reviewed epic release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing version tag to publish
+        type: string
+        required: true
+      version:
+        description: Version matching the existing tag
+        type: string
+        required: true
+      reviewed-pr:
+        description: Merged, approved pull request on main that prepared this release
+        type: string
+        required: true
+
+permissions: {}
+
+concurrency:
+  group: reviewed-release-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      tag: ${{ steps.validate.outputs.tag }}
+      version: ${{ steps.validate.outputs.version }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Validate the reviewed release route
+        id: validate
+        env:
+          TAG: ${{ inputs.tag }}
+          VERSION: ${{ inputs.version }}
+          REVIEWED_PR: ${{ inputs['reviewed-pr'] }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 .github/scripts/validate_reviewed_release.py
+
+  release:
+    needs: validate
+    permissions:
+      contents: write
+    uses: tinyhumansai/.github/.github/workflows/module-release.yml@e045fc567c583a1b83cd9c1edef896179853fa69
+    with:
+      tag: ${{ needs.validate.outputs.tag }}
+      version: ${{ needs.validate.outputs.version }}
+      module-crate: tinyhosts

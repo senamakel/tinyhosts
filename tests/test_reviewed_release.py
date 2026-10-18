@@ -1,7 +1,9 @@
 """Contract tests for the reviewed TinyHosts release route."""
 
 import importlib.util
-import json
+import hashlib
+import subprocess
+import tomllib
 import unittest
 from pathlib import Path
 
@@ -31,6 +33,19 @@ def pull_request(**overrides):
 
 
 class ReviewedReleaseContractTests(unittest.TestCase):
+    def test_release_manifest_and_module_sdk_are_pinned_together(self):
+        manifest = tomllib.loads((ROOT / "Cargo.toml").read_text())
+        bus_manifest = tomllib.loads((ROOT / "crates" / "tinyhosts-bus" / "Cargo.toml").read_text())
+        self.assertEqual(manifest["package"]["version"], "0.4.2")
+        self.assertEqual(bus_manifest["package"]["version"], "0.4.2")
+        self.assertEqual(manifest["dependencies"]["tinyhosts-bus"]["version"], "0.4.2")
+        self.assertEqual(manifest["dependencies"]["tinybus"]["version"], ">=0.3.2, <0.4")
+        self.assertEqual(manifest["dependencies"]["tinybus-module"]["version"], ">=0.3.2, <0.4")
+        self.assertEqual(
+            subprocess.check_output(["git", "-C", str(ROOT / "vendor" / "tinybus"), "rev-parse", "HEAD"], text=True).strip(),
+            "cba2de0e573f99fe4c7e45ba14e2d6b5a2a7757f",
+        )
+
     def test_routes_a_valid_reviewed_release(self):
         route = release.release_route(
             tag="v0.4.2",
@@ -40,7 +55,12 @@ class ReviewedReleaseContractTests(unittest.TestCase):
         )
         self.assertEqual(
             route,
-            {"tag": "v0.4.2", "version": "0.4.2", "reviewed-pr": 42},
+            {
+                "tag": "v0.4.2",
+                "version": "0.4.2",
+                "reviewed-pr": 42,
+                "module-crate": "tinyhosts",
+            },
         )
 
     def test_rejects_invalid_release_inputs(self):
@@ -106,8 +126,8 @@ class ReviewedReleaseContractTests(unittest.TestCase):
         for input_name in ["tag", "version", "reviewed-pr"]:
             self.assertIn(f"      {input_name}:", workflow)
         self.assertEqual(
-            json.dumps({"legacy_workflow_sha256": __import__("hashlib").sha256(legacy).hexdigest()}),
-            '{"legacy_workflow_sha256": "fc76c1d8dd5487bda978502932107d8cfa1ed671"}',
+            hashlib.sha256(legacy).hexdigest(),
+            "fc76c1d8dd5487bda978502932107d8cfa1ed671",
         )
 
 
