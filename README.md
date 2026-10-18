@@ -155,7 +155,15 @@ cargo build --all-targets --all-features
 cargo test --all-features
 ```
 
-Those four are exactly what CI runs. Optional extras:
+Those four are the Rust build and test contract used by CI. CI also checks the
+reviewed release route and compatibility pins; run this from the repository
+root after changing release workflows:
+
+```sh
+python3 -B -m unittest tests.test_reviewed_release -v
+```
+
+Optional extras:
 
 ```sh
 cargo run --example basic            # build a launch plan, send nothing

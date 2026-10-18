@@ -89,14 +89,21 @@ written to expect. `Vercel::with_base_url` exists for exactly this.
 
 ## Build And Test
 
-Run every command from the repository root. These four are the contract; CI
-runs exactly them, so a green local run should mean a green CI run.
+Run every command from the repository root. These four are the Rust build and
+test contract used by CI:
 
 ```sh
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo build --workspace --all-targets --all-features
 cargo test --workspace --all-features
+```
+
+CI also runs the reviewed release routing and compatibility contract. Run it
+locally after changing release workflows or their pinned shared workflow:
+
+```sh
+python3 -B -m unittest tests.test_reviewed_release -v
 ```
 
 Supporting commands:
