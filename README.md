@@ -151,9 +151,9 @@ git submodule update --init --recursive
 ```sh
 python3 -B -m unittest tests.test_reviewed_release -v
 cargo fmt --all -- --check
-cargo clippy --all-targets --all-features -- -D warnings
-cargo build --all-targets --all-features
-cargo test --all-features
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+cargo build --workspace --all-targets --all-features
+cargo test --workspace --all-features
 ```
 
 The Python contract test checks the reviewed workflow pin, package and
