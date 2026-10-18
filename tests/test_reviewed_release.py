@@ -46,7 +46,7 @@ class ReviewedReleaseContractTests(unittest.TestCase):
         )
         self.assertIn(
             "uses: tinyhumansai/.github/.github/workflows/module-reviewed-epic-release.yml"
-            "@e045fc567c583a1b83dc9c1edef896179853fa69",
+            "@6ed83b04aab2d8977ec62e966cb914531e534fa4",
             workflow,
         )
         self.assertIn("tag: ${{ inputs.tag }}", workflow)
