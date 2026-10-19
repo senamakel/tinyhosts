@@ -91,7 +91,10 @@ class ReviewedReleaseContractTests(unittest.TestCase):
             workflow,
         )
         self.assertIsNotNone(reviewed_job)
-        self.assertIn("if: needs.resolve.outputs.mode == 'reviewed-epic'", reviewed_job.group("body"))
+        self.assertIn(
+            "if: needs.resolve.outputs.mode == 'reviewed-epic'",
+            reviewed_job.group("body"),
+        )
         self.assertIn(
             "uses: tinyhumansai/.github/.github/workflows/module-reviewed-epic-release.yml"
             "@6ed83b04aab2d8977ec62e966cb914531e534fa4",
@@ -100,7 +103,10 @@ class ReviewedReleaseContractTests(unittest.TestCase):
         self.assertIn("pull-requests: read", reviewed_job.group("body"))
         self.assertIn("checks: read", reviewed_job.group("body"))
         self.assertIn("actions: read", reviewed_job.group("body"))
-        self.assertIn("reviewed-pr: ${{ fromJSON(needs.resolve.outputs.reviewed_pr) }}", reviewed_job.group("body"))
+        self.assertIn(
+            "reviewed-pr: ${{ fromJSON(needs.resolve.outputs.reviewed_pr) }}",
+            reviewed_job.group("body"),
+        )
 
         lines = workflow.splitlines()
         run_line = lines.index("        run: |")
