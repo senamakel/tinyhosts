@@ -18,13 +18,13 @@ class ReviewedReleaseContractTests(unittest.TestCase):
         self.assertEqual(manifest["package"]["version"], "0.4.2")
         self.assertEqual(bus_manifest["package"]["version"], "0.4.2")
         self.assertEqual(manifest["dependencies"]["tinyhosts-bus"]["version"], "0.4.2")
-        self.assertEqual(manifest["dependencies"]["tinybus"]["version"], ">=0.3.2, <0.4")
-        self.assertEqual(manifest["dependencies"]["tinybus-module"]["version"], ">=0.3.2, <0.4")
+        self.assertEqual(manifest["dependencies"]["tinybus"]["version"], ">=0.3.3, <0.4")
+        self.assertEqual(manifest["dependencies"]["tinybus-module"]["version"], ">=0.3.3, <0.4")
         self.assertEqual(
             subprocess.check_output(
                 ["git", "-C", str(ROOT), "rev-parse", "HEAD:vendor/tinybus"], text=True
             ).strip(),
-            "cba2de0e573f99fe4c7e45ba14e2d6b5a2a7757f",
+            "207a9a7df15e44fdba00a807d0f7eaf21904ba0e",
         )
 
     def test_reviewed_epic_release_delegates_to_the_canonical_preflight(self):
