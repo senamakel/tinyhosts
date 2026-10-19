@@ -1,7 +1,9 @@
 """Contract tests for the reviewed TinyHosts release route."""
 
+import os
 import re
 import subprocess
+import tempfile
 import tomllib
 import unittest
 from pathlib import Path
@@ -98,6 +100,50 @@ class ReviewedReleaseContractTests(unittest.TestCase):
         self.assertIn("checks: read", reviewed_job.group("body"))
         self.assertIn("actions: read", reviewed_job.group("body"))
         self.assertIn("reviewed-pr: ${{ fromJSON(needs.resolve.outputs.reviewed_pr) }}", reviewed_job.group("body"))
+
+        lines = workflow.splitlines()
+        run_line = lines.index("        run: |")
+        script_lines = []
+        for line in lines[run_line + 1 :]:
+            if line.startswith("          "):
+                script_lines.append(line[10:])
+            elif line.strip():
+                break
+            else:
+                script_lines.append("")
+        resolve_script = "\n".join(script_lines)
+
+        def resolve(mode, event, tag, reviewed_pr):
+            with tempfile.TemporaryDirectory() as directory:
+                output_path = Path(directory) / "github-output"
+                result = subprocess.run(
+                    ["bash", "-c", resolve_script],
+                    env={
+                        **os.environ,
+                        "MODE": mode,
+                        "GITHUB_EVENT_NAME": event,
+                        "TAG": tag,
+                        "REVIEWED_PR": reviewed_pr,
+                        "GITHUB_OUTPUT": str(output_path),
+                    },
+                    capture_output=True,
+                    text=True,
+                )
+                output = output_path.read_text() if output_path.exists() else ""
+                return result, output
+
+        result, output = resolve("reviewed-epic", "workflow_dispatch", "v0.4.2", "36")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("tag=v0.4.2\nversion=0.4.2\nmode=reviewed-epic\n", output)
+        self.assertIn("reviewed_pr=36\n", output)
+
+        result, _ = resolve("reviewed-epic", "workflow_dispatch", "v0.4.2", "0")
+        self.assertNotEqual(result.returncode, 0)
+
+        result, output = resolve("main", "workflow_dispatch", "v0.4.2", "")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("mode=main\n", output)
+        self.assertNotIn("reviewed_pr=", output)
 
     def test_ordinary_release_still_uses_the_pinned_module_release(self):
         workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text()
