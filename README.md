@@ -186,12 +186,13 @@ For a release from the canonical epic branch
 `tinyhumansai/tinyhosts:epic/8056-modules-wiring`, select `reviewed-epic` in the
 registered **Release** workflow's `release_mode`. Create and push a signed
 `v<version>` tag that points to the exact merge commit of the canonical pull
-request, then dispatch with `tag` (for example, `v0.4.2`), `version` without
-the leading `v` (for example, `0.4.2`), and `reviewed_pr` set to that positive
-canonical pull request number. The tag must already exist when dispatched.
-Preflight checks the tag target and that the pull request is merged to the
-canonical epic branch with its required reviews and checks; it does not verify
-the tag's cryptographic signature.
+request, then dispatch with `release_mode=reviewed-epic`, `tag=v0.4.2`, and
+`reviewed_pr=36` (replace the examples with the matching version and positive
+canonical pull request number). The tag must already exist when dispatched;
+the workflow derives its version from the tag. Preflight checks the tag target
+and that the pull request is merged to the canonical epic branch with its
+required reviews and checks; it does not verify the tag's cryptographic
+signature.
 
 The shared release workflow builds and verifies 17 native and distro archives across
 Linux, macOS, and Windows. Assets follow
