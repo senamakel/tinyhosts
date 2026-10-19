@@ -147,10 +147,16 @@ class ReviewedReleaseContractTests(unittest.TestCase):
         result, _ = resolve("reviewed-epic", "workflow_dispatch", "v0.4.2", "0")
         self.assertNotEqual(result.returncode, 0)
 
+        result, _ = resolve("reviewed-epic", "push", "v0.4.2", "36")
+        self.assertNotEqual(result.returncode, 0)
+
         result, output = resolve("main", "workflow_dispatch", "v0.4.2", "")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("mode=main\n", output)
         self.assertNotIn("reviewed_pr=", output)
+
+        result, _ = resolve("main", "workflow_dispatch", "v0.4.2", "36")
+        self.assertNotEqual(result.returncode, 0)
 
     def test_ordinary_release_still_uses_the_pinned_module_release(self):
         workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text()
