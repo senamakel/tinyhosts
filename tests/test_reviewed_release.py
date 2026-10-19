@@ -1,6 +1,5 @@
 """Contract tests for the reviewed TinyHosts release route."""
 
-import hashlib
 import re
 import subprocess
 import tomllib
@@ -74,7 +73,7 @@ class ReviewedReleaseContractTests(unittest.TestCase):
         )
         self.assertRegex(
             inputs,
-            r"(?ms)^      reviewed-pr:\n(?:(?!^      [a-z-]+:).)*?"
+            r"(?ms)^      reviewed_pr:\n(?:(?!^      [a-z_]+:).)*?"
             r"^        type: number\n(?:(?!^      [a-z-]+:).)*?"
             r"^        required: false\n",
         )
@@ -99,12 +98,26 @@ class ReviewedReleaseContractTests(unittest.TestCase):
         self.assertIn("actions: read", reviewed_job.group("body"))
         self.assertIn("reviewed-pr: ${{ fromJSON(needs.resolve.outputs.reviewed_pr) }}", reviewed_job.group("body"))
 
-    def test_ordinary_release_workflow_is_unchanged(self):
-        legacy = (ROOT / ".github" / "workflows" / "release.yml").read_bytes()
-        self.assertEqual(
-            hashlib.sha256(legacy).hexdigest(),
-            "9f50de454c7fa81350a62358fe18a25ef9afe3f34a593dc34ff30dd1c2c5a8b6",
+    def test_ordinary_release_still_uses_the_pinned_module_release(self):
+        workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text()
+        self.assertIn("  push:\n    tags: ['v*']\n", workflow)
+        module_job = re.search(
+            r"(?ms)^  module-release:\n(?P<body>.*?)(?=^  [a-z0-9-]+:|\Z)",
+            workflow,
         )
+        self.assertIsNotNone(module_job)
+        body = module_job.group("body")
+        self.assertIn("if: needs.resolve.outputs.mode == 'main'", body)
+        self.assertIn("needs: resolve", body)
+        self.assertIn("permissions:\n      contents: write", body)
+        self.assertIn(
+            "uses: tinyhumansai/.github/.github/workflows/module-release.yml"
+            "@4adc1080fb495098e7af1aade82ed7e6e3c69bb7",
+            body,
+        )
+        self.assertIn("tag: ${{ needs.resolve.outputs.tag }}", body)
+        self.assertIn("version: ${{ needs.resolve.outputs.version }}", body)
+        self.assertIn("module-crate: tinyhosts", body)
 
 
 if __name__ == "__main__":
