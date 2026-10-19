@@ -57,6 +57,48 @@ class ReviewedReleaseContractTests(unittest.TestCase):
         self.assertNotIn("validate_reviewed_release.py", workflow)
         self.assertNotIn("  push:", workflow)
 
+    def test_registered_release_dispatch_routes_reviewed_epics_to_preflight(self):
+        workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text()
+        dispatch = re.search(
+            r"(?ms)^  workflow_dispatch:\n(?P<body>.*?)(?=^  push:)", workflow
+        )
+        self.assertIsNotNone(dispatch)
+        inputs = dispatch.group("body")
+        self.assertRegex(
+            inputs,
+            r"(?ms)^    inputs:\n.*?^      release_mode:\n"
+            r"(?:(?!^      [a-z-]+:).)*?^        type: choice\n"
+            r"(?:(?!^      [a-z-]+:).)*?^        default: main\n"
+            r"(?:(?!^      [a-z-]+:).)*?^          - main\n"
+            r"(?:(?!^      [a-z-]+:).)*?^          - reviewed-epic\n",
+        )
+        self.assertRegex(
+            inputs,
+            r"(?ms)^      reviewed-pr:\n(?:(?!^      [a-z-]+:).)*?"
+            r"^        type: number\n(?:(?!^      [a-z-]+:).)*?"
+            r"^        required: false\n",
+        )
+        self.assertIn('[[ "$MODE" == "main" || "$MODE" == "reviewed-epic" ]]', workflow)
+        self.assertIn('[[ "$REVIEWED_PR" =~ ^[1-9][0-9]*$ ]]', workflow)
+        self.assertIn('echo "mode=$MODE" >> "$GITHUB_OUTPUT"', workflow)
+        self.assertIn('echo "reviewed_pr=$REVIEWED_PR" >> "$GITHUB_OUTPUT"', workflow)
+
+        reviewed_job = re.search(
+            r"(?ms)^  reviewed-module-release:\n(?P<body>.*?)(?=^  [a-z0-9-]+:|\Z)",
+            workflow,
+        )
+        self.assertIsNotNone(reviewed_job)
+        self.assertIn("if: needs.resolve.outputs.mode == 'reviewed-epic'", reviewed_job.group("body"))
+        self.assertIn(
+            "uses: tinyhumansai/.github/.github/workflows/module-reviewed-epic-release.yml"
+            "@6ed83b04aab2d8977ec62e966cb914531e534fa4",
+            reviewed_job.group("body"),
+        )
+        self.assertIn("pull-requests: read", reviewed_job.group("body"))
+        self.assertIn("checks: read", reviewed_job.group("body"))
+        self.assertIn("actions: read", reviewed_job.group("body"))
+        self.assertIn("reviewed-pr: ${{ fromJSON(needs.resolve.outputs.reviewed_pr) }}", reviewed_job.group("body"))
+
     def test_ordinary_release_workflow_is_unchanged(self):
         legacy = (ROOT / ".github" / "workflows" / "release.yml").read_bytes()
         self.assertEqual(
