@@ -82,8 +82,9 @@ class ReviewedReleaseContractTests(unittest.TestCase):
         )
         self.assertIn('[[ "$MODE" == "main" || "$MODE" == "reviewed-epic" ]]', workflow)
         self.assertIn('[[ "$REVIEWED_PR" =~ ^[1-9][0-9]*$ ]]', workflow)
-        self.assertIn('echo "mode=$MODE" >> "$GITHUB_OUTPUT"', workflow)
-        self.assertIn('echo "reviewed_pr=$REVIEWED_PR" >> "$GITHUB_OUTPUT"', workflow)
+        self.assertIn('echo "mode=$MODE"', workflow)
+        self.assertIn('echo "reviewed_pr=$REVIEWED_PR"', workflow)
+        self.assertIn('} >> "$GITHUB_OUTPUT"', workflow)
 
         reviewed_job = re.search(
             r"(?ms)^  reviewed-module-release:\n(?P<body>.*?)(?=^  [a-z0-9-]+:|\Z)",
