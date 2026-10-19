@@ -58,14 +58,18 @@ jobs:
               echo "reviewed_pr must be a positive canonical PR number" >&2
               exit 2
             }
-            echo "reviewed_pr=$REVIEWED_PR" >> "$GITHUB_OUTPUT"
           elif [[ -n "$REVIEWED_PR" ]]; then
             echo "reviewed_pr is only valid in reviewed-epic mode" >&2
             exit 2
           fi
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
-          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+          {
+            echo "tag=$TAG"
+            echo "version=${TAG#v}"
+            echo "mode=$MODE"
+            if [[ "$MODE" == "reviewed-epic" ]]; then
+              echo "reviewed_pr=$REVIEWED_PR"
+            fi
+          } >> "$GITHUB_OUTPUT"
   module-release:
     if: needs.resolve.outputs.mode == 'main'
     needs: resolve
