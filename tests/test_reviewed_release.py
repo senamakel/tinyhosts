@@ -69,7 +69,7 @@ class ReviewedReleaseContractTests(unittest.TestCase):
             r"(?:(?!^      [a-z-]+:).)*?^        type: choice\n"
             r"(?:(?!^      [a-z-]+:).)*?^        options:\n"
             r"(?:(?!^      [a-z-]+:).)*?^          - main\n"
-            r"(?:(?!^      [a-z-]+:).)*?^          - reviewed-epic\n",
+            r"(?:(?!^      [a-z-]+:).)*?^          - reviewed-epic\n"
             r"(?:(?!^      [a-z-]+:).)*?^        default: main\n",
         )
         self.assertRegex(
