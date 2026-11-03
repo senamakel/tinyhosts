@@ -12,20 +12,26 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
+# The TinyBus SDK range and the vendored checkout move together: bump both here
+# when vendor/tinybus moves. 6ce06bc is TinyBus v0.3.6, the range's lower bound.
+TINYBUS_SDK_RANGE = ">=0.3.6, <0.4"
+TINYBUS_VENDOR_COMMIT = "6ce06bc674e4f4d718aa51e643ef62c1f372e270"
+
+
 class ReviewedReleaseContractTests(unittest.TestCase):
     def test_release_manifest_and_tinybus_sdk_are_pinned_together(self):
         manifest = tomllib.loads((ROOT / "Cargo.toml").read_text())
         bus_manifest = tomllib.loads((ROOT / "crates" / "tinyhosts-bus" / "Cargo.toml").read_text())
-        self.assertEqual(manifest["package"]["version"], "0.4.2")
-        self.assertEqual(bus_manifest["package"]["version"], "0.4.2")
-        self.assertEqual(manifest["dependencies"]["tinyhosts-bus"]["version"], "0.4.2")
-        self.assertEqual(manifest["dependencies"]["tinybus"]["version"], ">=0.3.3, <0.4")
-        self.assertEqual(manifest["dependencies"]["tinybus-module"]["version"], ">=0.3.3, <0.4")
+        version = manifest["package"]["version"]
+        self.assertEqual(bus_manifest["package"]["version"], version)
+        self.assertEqual(manifest["dependencies"]["tinyhosts-bus"]["version"], version)
+        self.assertEqual(manifest["dependencies"]["tinybus"]["version"], TINYBUS_SDK_RANGE)
+        self.assertEqual(manifest["dependencies"]["tinybus-module"]["version"], TINYBUS_SDK_RANGE)
         self.assertEqual(
             subprocess.check_output(
                 ["git", "-C", str(ROOT), "rev-parse", "HEAD:vendor/tinybus"], text=True
             ).strip(),
-            "207a9a7df15e44fdba00a807d0f7eaf21904ba0e",
+            TINYBUS_VENDOR_COMMIT,
         )
 
     def test_reviewed_epic_release_delegates_to_the_canonical_preflight(self):
