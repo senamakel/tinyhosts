@@ -95,7 +95,7 @@ on every pull request and every push to `main`. Run it as part of normal
 validation:
 
 ```sh
-python3 -B -m unittest tests.test_reviewed_release -v
+python3 -B tests/test_reviewed_release.py -v
 ```
 
 These four commands are the Rust build and test contract used by CI:

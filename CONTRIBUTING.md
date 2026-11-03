@@ -12,7 +12,8 @@ This repository follows the shared module CI and release contract maintained in
 ## Development Setup
 
 Install a stable Rust toolchain with Rust 2024 support (see `rust-version` in
-`Cargo.toml` for the minimum supported version), then initialize the vendored
+`Cargo.toml` for the minimum supported version) and Python 3.11 or later (the
+reviewed-release contract test uses `tomllib`), then initialize the vendored
 submodules:
 
 ```sh
@@ -23,7 +24,7 @@ Run the baseline validation locally; the reusable CI workflow also runs the
 cross-platform module gates described above:
 
 ```sh
-python3 -B -m unittest tests.test_reviewed_release -v
+python3 -B tests/test_reviewed_release.py -v
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo build --workspace --all-targets --all-features
@@ -71,7 +72,7 @@ regardless.
 
 ## Pull Request Checklist
 
-- [ ] `python3 -B -m unittest tests.test_reviewed_release -v`
+- [ ] `python3 -B tests/test_reviewed_release.py -v`
 - [ ] `cargo fmt --all -- --check`
 - [ ] `cargo clippy --workspace --all-targets --all-features -- -D warnings`
 - [ ] `cargo build --workspace --all-targets --all-features`

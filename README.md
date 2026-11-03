@@ -149,7 +149,7 @@ git submodule update --init --recursive
 ```
 
 ```sh
-python3 -B -m unittest tests.test_reviewed_release -v
+python3 -B tests/test_reviewed_release.py -v
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo build --workspace --all-targets --all-features
