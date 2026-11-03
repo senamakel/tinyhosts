@@ -22,6 +22,11 @@ permissions:
   checks: read
   actions: read
 
+# Shares release.yml's tag group, so both release routes serialize on one tag.
+concurrency:
+  group: release-${{ inputs.tag }}
+  cancel-in-progress: false
+
 jobs:
   release:
     uses: tinyhumansai/.github/.github/workflows/module-reviewed-epic-release.yml@6ed83b04aab2d8977ec62e966cb914531e534fa4
